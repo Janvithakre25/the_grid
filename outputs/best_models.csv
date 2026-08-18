@@ -1,0 +1,7 @@
+node,horizon,model,MAE,RMSE,MAPE_%
+F1_derived,medium-term (24h),XGBoost,11.043,14.8473,64.32
+F1_derived,short-term (1h),XGBoost,9.9831,13.6456,55.18
+S1_derived,medium-term (24h),XGBoost,176.9415,237.6213,64.75
+S1_derived,short-term (1h),XGBoost,159.0314,217.2932,55.17
+UCI_H1,medium-term (24h),XGBoost,0.4424,0.5944,64.67
+UCI_H1,short-term (1h),XGBoost,0.3956,0.542,54.76

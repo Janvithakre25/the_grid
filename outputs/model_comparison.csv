@@ -1,0 +1,19 @@
+node,horizon,model,MAE,RMSE,MAPE_%
+UCI_H1,short-term (1h),RandomForest,0.3992,0.5492,56.26
+UCI_H1,short-term (1h),XGBoost,0.3956,0.542,54.76
+UCI_H1,medium-term (24h),RandomForest,0.4457,0.5996,65.73
+UCI_H1,medium-term (24h),XGBoost,0.4424,0.5944,64.67
+F1_derived,short-term (1h),RandomForest,10.0218,13.7735,56.49
+F1_derived,short-term (1h),XGBoost,9.9831,13.6456,55.18
+F1_derived,medium-term (24h),RandomForest,11.1483,15.0065,65.78
+F1_derived,medium-term (24h),XGBoost,11.043,14.8473,64.32
+S1_derived,short-term (1h),RandomForest,159.6965,219.4112,56.23
+S1_derived,short-term (1h),XGBoost,159.0314,217.2932,55.17
+S1_derived,medium-term (24h),RandomForest,178.2979,239.7063,65.69
+S1_derived,medium-term (24h),XGBoost,176.9415,237.6213,64.75
+UCI_H1,short-term (1h),Prophet,0.5074,0.6549,77.22
+UCI_H1,medium-term (24h),Prophet,0.4874,0.6317,74.73
+F1_derived,short-term (1h),Prophet,12.7139,16.4076,77.43
+F1_derived,medium-term (24h),Prophet,12.2165,15.8211,74.95
+S1_derived,short-term (1h),Prophet,202.858,261.8521,77.16
+S1_derived,medium-term (24h),Prophet,194.8349,252.5964,74.66
