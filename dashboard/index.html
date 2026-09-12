@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Grid Load Forecast — India</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg: #0B1526;
+    --panel: #101E36;
+    --panel-border: #1E2E4D;
+    --text: #E6ECF5;
+    --text-dim: #8FA1BF;
+    --accent: #35D0C0;
+    --accent-dim: #1B7A70;
+    --amber: #F0A94E;
+    --red: #F0684E;
+    --green: #4EC98A;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+  }
+  /* ---------- LOGIN ---------- */
+  #login-screen{
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 20% 20%, #12213D 0%, #0B1526 60%);
+  }
+  .login-card{
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 40px 36px;
+    width: 340px;
+  }
+  .login-card h1{
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+  .login-card .sub{
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-bottom: 28px;
+  }
+  .field{ margin-bottom: 16px; }
+  .field label{
+    display:block;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .field input, .field select{
+    width: 100%;
+    background: #0B1526;
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 0.9rem;
+  }
+  .field input:focus, .field select:focus{ outline: none; border-color: var(--accent); }
+  .btn{
+    width: 100%;
+    background: var(--accent);
+    color: #06201C;
+    border: none;
+    border-radius: 4px;
+    padding: 11px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .btn:hover{ background: #4FE0D0; }
+  .btn.secondary{
+    background: transparent;
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+  }
+  .btn.secondary:hover{ border-color: var(--accent); }
+  .demo-creds{
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--panel-border);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .demo-creds code{ color: var(--accent); font-family: var(--mono); }
+  .error-msg{
+    color: var(--red);
+    font-size: 0.8rem;
+    margin-top: 8px;
+    display: none;
+  }
+
+  /* ---------- DASHBOARD ---------- */
+  #dashboard{ display: none; }
+  header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--panel-border);
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand .dot{ width:8px; height:8px; border-radius:50%; background: var(--accent); }
+  .brand span{ font-weight:600; letter-spacing:-0.01em; }
+  .header-controls{ display:flex; align-items:center; gap:14px; }
+  .header-controls select{
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: var(--sans);
+    font-size: 0.85rem;
+  }
+  .role-pill{
+    font-size: 0.72rem;
+    color: var(--accent);
+    border: 1px solid var(--accent-dim);
+    background: rgba(53,208,192,0.08);
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+  .logout-link{
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .logout-link:hover{ color: var(--text); }
+
+  main{ padding: 24px 28px 60px; max-width: 1200px; margin: 0 auto; }
+
+  .stat-row{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .stat-card{
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 18px 20px;
+  }
+  .stat-card .label{
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .stat-card .value{
+    font-family: var(--mono);
+    font-size: 1.55rem;
+    font-weight: 600;
+  }
+  .stat-card .unit{ font-size:0.85rem; color: var(--text-dim); margin-left: 4px; }
+
+  .severity-banner{
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid;
+  }
+  .severity-banner.HIGH{ background: rgba(240,104,78,0.08); border-color: var(--red); }
+  .severity-banner.NORMAL{ background: rgba(53,208,192,0.06); border-color: var(--accent-dim); }
+  .severity-banner.LOW{ background: rgba(78,201,138,0.08); border-color: var(--green); }
+  .severity-banner .tag{
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 3px;
+    letter-spacing: 0.03em;
+  }
+  .severity-banner.HIGH .tag{ background: var(--red); color: #2B0A05; }
+  .severity-banner.NORMAL .tag{ background: var(--accent); color: #06201C; }
+  .severity-banner.LOW .tag{ background: var(--green); color: #062015; }
+  .severity-banner .action{ font-size: 0.88rem; color: var(--text); flex: 1; margin-left: 16px; }
+
+  .panel-grid{
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 20px;
+  }
+  .panel h2{
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    text-transform: none;
+  }
+  .factor-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--panel-border);
+    font-size: 0.85rem;
+  }
+  .factor-row:last-child{ border-bottom: none; }
+  .factor-name{ font-family: var(--mono); font-size: 0.8rem; color: var(--text); }
+  .factor-bar-wrap{ width: 90px; height: 6px; background: #0B1526; border-radius: 3px; overflow: hidden; }
+  .factor-bar{ height: 100%; border-radius: 3px; }
+  .factor-bar.pos{ background: var(--red); }
+  .factor-bar.neg{ background: var(--accent); }
+
+  table{ width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  th{
+    text-align: left;
+    color: var(--text-dim);
+    font-weight: 500;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--panel-border);
+  }
+  td{
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--panel-border);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+  }
+  .drift-yes{ color: var(--red); }
+  .drift-no{ color: var(--text-dim); }
+
+  .loading-state, .error-state{
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    padding: 40px 0;
+    text-align: center;
+  }
+  .error-state{ color: var(--red); }
+</style>
+</head>
+<body>
+
+  <!-- ============ LOGIN SCREEN ============ -->
+  <div id="login-screen">
+    <div class="login-card">
+      <h1>Grid Load Forecast</h1>
+      <div class="sub">Smart Grid Energy Consumption Forecasting — India</div>
+
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="e.g. operator" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="••••••••" />
+      </div>
+      <button class="btn" onclick="login()">Sign in</button>
+      <div class="error-msg" id="login-error">Invalid username or password.</div>
+
+      <div class="demo-creds">
+        Demo accounts —<br/>
+        Administrator: <code>admin / admin123</code><br/>
+        Grid Operator: <code>operator / operator123</code><br/>
+        Utility Company: <code>utility / utility123</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ DASHBOARD ============ -->
+  <div id="dashboard">
+    <header>
+      <div class="brand">
+        <div class="dot"></div>
+        <span>Grid Load Forecast</span>
+      </div>
+      <div class="header-controls">
+        <select id="state-select" onchange="loadAll()"></select>
+        <select id="horizon-select" onchange="loadAll()">
+          <option value="1d">Short-term (1 day)</option>
+          <option value="7d">Medium-term (7 day)</option>
+        </select>
+        <span class="role-pill" id="role-pill">—</span>
+        <a class="logout-link" onclick="logout()">Sign out</a>
+      </div>
+    </header>
+
+    <main>
+      <div class="severity-banner NORMAL" id="severity-banner">
+        <span class="tag" id="severity-tag">—</span>
+        <span class="action" id="severity-action">Loading recommendation…</span>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="label">Last actual consumption</div>
+          <div class="value" id="stat-actual">—<span class="unit">MU</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Forecast</div>
+          <div class="value" id="stat-forecast">—<span class="unit">MU</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="label">As of</div>
+          <div class="value" id="stat-date" style="font-size:1.1rem">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">State</div>
+          <div class="value" id="stat-state" style="font-size:1.1rem">—</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px;">
+        <h2>Consumption history (last 60 days)</h2>
+        <canvas id="history-chart" height="80"></canvas>
+      </div>
+
+      <div class="panel-grid">
+        <div class="panel">
+          <h2>Continuous monitoring — recent drift checks</h2>
+          <table id="monitoring-table">
+            <thead>
+              <tr><th>Window</th><th>MAE</th><th>Baseline</th><th>Drift</th></tr>
+            </thead>
+            <tbody><tr><td colspan="4" class="loading-state">Loading…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h2>Top factors behind this forecast (SHAP)</h2>
+          <div id="shap-factors"><div class="loading-state">Loading…</div></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+<script>
+const API = "http://127.0.0.1:8000";
+let token = null;
+let chart = null;
+
+async function login(){
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+  const errEl = document.getElementById("login-error");
+  errEl.style.display = "none";
+
+  try{
+    const res = await fetch(`${API}/login`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({username, password})
+    });
+    if(!res.ok){ throw new Error("bad creds"); }
+    const data = await res.json();
+    token = data.access_token;
+    localStorage.setItem("grid_token", token);
+    localStorage.setItem("grid_role", data.role);
+    document.getElementById("role-pill").textContent = data.role;
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    await populateStates();
+    await loadAll();
+  }catch(e){
+    errEl.style.display = "block";
+  }
+}
+
+function logout(){
+  token = null;
+  localStorage.removeItem("grid_token");
+  localStorage.removeItem("grid_role");
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("login-screen").style.display = "flex";
+}
+
+async function authFetch(path){
+  const res = await fetch(`${API}${path}`, { headers: { "Authorization": `Bearer ${token}` } });
+  if(res.status === 401){ logout(); throw new Error("session expired"); }
+  return res.json();
+}
+
+async function populateStates(){
+  const data = await authFetch("/states");
+  const sel = document.getElementById("state-select");
+  sel.innerHTML = "";
+  data.states.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s; opt.textContent = s.replace(/_/g, " ");
+    if(s === "Maharashtra") opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+async function loadAll(){
+  const state = document.getElementById("state-select").value;
+  const horizon = document.getElementById("horizon-select").value;
+  if(!state) return;
+
+  await Promise.all([
+    loadForecastAndRecommendation(state, horizon),
+    loadHistory(state),
+    loadShap(state, horizon),
+    loadMonitoring(),
+  ]);
+}
+
+async function loadForecastAndRecommendation(state, horizon){
+  const fc = await authFetch(`/forecast/${state}?horizon=${horizon}`);
+  document.getElementById("stat-actual").innerHTML = `${fc.last_actual_mu}<span class="unit">MU</span>`;
+  document.getElementById("stat-forecast").innerHTML = `${fc.predicted_mu}<span class="unit">MU</span>`;
+  document.getElementById("stat-date").textContent = fc.as_of;
+  document.getElementById("stat-state").textContent = state.replace(/_/g, " ");
+
+  const rec = await authFetch(`/recommend/${state}?horizon=${horizon}`);
+  const banner = document.getElementById("severity-banner");
+  banner.className = `severity-banner ${rec.severity}`;
+  document.getElementById("severity-tag").textContent = rec.severity;
+  document.getElementById("severity-action").textContent = rec.action;
+}
+
+async function loadHistory(state){
+  const hist = await authFetch(`/history/${state}?days=60`);
+  const ctx = document.getElementById("history-chart").getContext("2d");
+  if(chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: hist.dates,
+      datasets: [{
+        label: "Consumption (MU)",
+        data: hist.consumption_mu,
+        borderColor: "#35D0C0",
+        backgroundColor: "rgba(53,208,192,0.08)",
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.25,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: "#8FA1BF", maxTicksLimit: 8 }, grid: { color: "#1E2E4D" } },
+        y: { ticks: { color: "#8FA1BF" }, grid: { color: "#1E2E4D" } },
+      }
+    }
+  });
+}
+
+async function loadShap(state, horizon){
+  const el = document.getElementById("shap-factors");
+  try{
+    const data = await authFetch(`/explain/${state}?horizon=${horizon}`);
+    const maxAbs = Math.max(...data.top_factors.map(f => Math.abs(f.shap_impact)));
+    el.innerHTML = data.top_factors.map(f => {
+      const pct = Math.min(100, (Math.abs(f.shap_impact) / maxAbs) * 100);
+      const cls = f.shap_impact >= 0 ? "pos" : "neg";
+      return `<div class="factor-row">
+        <span class="factor-name">${f.feature}</span>
+        <div class="factor-bar-wrap"><div class="factor-bar ${cls}" style="width:${pct}%"></div></div>
+      </div>`;
+    }).join("");
+  }catch(e){
+    el.innerHTML = `<div class="error-state">Couldn't load SHAP — is the model trained for this state?</div>`;
+  }
+}
+
+async function loadMonitoring(){
+  const tbody = document.querySelector("#monitoring-table tbody");
+  try{
+    const data = await authFetch("/monitoring");
+    if(!data.log || data.log.length === 0){
+      tbody.innerHTML = `<tr><td colspan="4" class="loading-state">No monitoring runs yet — run 07_monitor_retrain_india.py</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.log.slice(-8).map(r => `
+      <tr>
+        <td>${r.window_start} → ${r.window_end}</td>
+        <td>${r.window_MAE}</td>
+        <td>${r.baseline_MAE}</td>
+        <td class="${r.drift_flagged ? 'drift-yes' : 'drift-no'}">${r.drift_flagged ? 'DRIFT' : 'stable'}</td>
+      </tr>`).join("");
+  }catch(e){
+    tbody.innerHTML = `<tr><td colspan="4" class="error-state">Couldn't load monitoring log</td></tr>`;
+  }
+}
+
+// auto-login if a token is already stored
+window.onload = () => {
+  const saved = localStorage.getItem("grid_token");
+  const role = localStorage.getItem("grid_role");
+  if(saved){
+    token = saved;
+    document.getElementById("role-pill").textContent = role || "—";
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    populateStates().then(loadAll).catch(() => logout());
+  }
+};
+
+document.getElementById("password").addEventListener("keydown", e => {
+  if(e.key === "Enter") login();
+});
+</script>
+</body>
+</html>
