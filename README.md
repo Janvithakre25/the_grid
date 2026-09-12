@@ -49,7 +49,7 @@ Schema (`data/energy_data_india.csv`):
 After weather merge (`data/energy_data_india_final.csv`):
 adds `temperature_c, humidity`.
 
-## 4. Dashboard (Step 6 — not included here)
+## 4. Dashboard 
 
 Once models + SHAP + recommendations work (steps 1–7 above), wrap them in:
 - **FastAPI backend**: one `/forecast/{state}` endpoint that loads the
