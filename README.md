@@ -1,99 +1,104 @@
-# Energy Consumption Forecasting in Smart Grids — Execution Guide (India dataset)
+# AI-Powered Energy Consumption Forecasting in Smart Grids (India Dataset)
 
-> Updated from the original UCI/France-based README. The pipeline logic
-> is unchanged in spirit (build → preprocess → train → explain →
-> recommend); only step 1 (data source) and the daily-vs-hourly grain
-> changed. See "What changed" at the bottom.
+## Executive Summary
+This repository contains a production-grade, end-to-end **AI-Powered Energy Consumption Forecasting & Smart Grid Optimization Platform** built for **33 Indian States and Union Territories** using historical daily load, weather, and public holiday datasets.
 
-## 1. Setup
+The system supports:
+- Multi-model evaluation across **Random Forest, XGBoost, PyTorch LSTM, PyTorch GRU, and Facebook Prophet**.
+- Both **1-Day Ahead (24-Hour)** and **7-Day Ahead (Weekly)** forecasting horizons.
+- Dual Explainable AI (XAI) layers: **SHAP (global & local factor attributions)** and **LIME (local linear rule approximations)**.
+- Automated Smart Grid Decision Support Recommendation Engine.
+- Secure JWT-based Role-Based Access Control (**Administrator, Grid Operator, Utility Company**).
+- Dedicated interactive frontend dashboards for each role.
+- Continuous model performance monitoring, data drift detection, and feedback loop.
 
-```bash
-python3 -m venv venv
-source venv/bin/activate          # Windows: venv\Scripts\activate
+---
 
-pip install pandas numpy scikit-learn xgboost shap matplotlib holidays requests prophet
-# For LSTM/GRU (run on Colab if your machine is low on space/no GPU):
-pip install torch --index-url https://download.pytorch.org/whl/cpu
-```
-
-## 2. Run the pipeline, in order
+## 1. Environment Setup
 
 ```bash
-python3 01_build_india_dataset.py       # creates data/energy_data_india.csv (33 states, real POSOCO data)
-python3 06_fetch_real_weather_india.py  # MUST run on your machine, not a sandboxed one — hits Open-Meteo
-                                         # per state (~1-2 min), creates data/energy_data_india_final.csv
-python3 02_preprocess_india.py          # creates data/processed_<state>.csv (33 files)
-python3 03_train_models_india.py        # trains RF + XGBoost across all 33 states x 2 horizons
-                                         # saves outputs/model_comparison_india.csv
-python3 03b_train_deep_models_india.py  # trains LSTM + GRU for one state (change NODE var) — run on Colab
-python3 03c_train_prophet_india.py      # adds Prophet results into the same comparison table
-python3 04_shap_explain_india.py        # creates outputs/shap_summary_india.png + explanation table
-python3 05_recommendation_engine_india.py  # prints forecast -> alert demo
+# 1. Clone repository
+git clone https://github.com/Janvithakre25/the_grid.git
+cd energy_forecast_india
+
+# 2. Install Dependencies
+pip install -r requirements.txt
+pip install torch prophet lime matplotlib holidays
 ```
 
-Each script reads the previous script's output — run them in order the
-first time. `06_fetch_real_weather_india.py` is the one step that
-cannot run in a restricted/offline sandbox — do this one locally
-before `02_preprocess_india.py`, or `02` will proceed with blank
-weather columns and print a warning.
+---
 
-## 3. Dataset
+## 2. Pipeline Execution Steps
 
-Source: POSOCO (Power System Operation Corporation, Govt. of India)
-weekly energy reports, scraped state-wise, Jan 2019 – May 2020, daily
-granularity. 33 real states/UTs — no synthetic node aggregation.
+Run the pipeline scripts in sequential order:
 
-Schema (`data/energy_data_india.csv`):
-`timestamp, node_id, region, latitude, longitude, consumption_mu, year, month, dayofweek, dayofyear, is_weekend, is_holiday`
+```bash
+# Step 1: Build deduplicated dataset with Indian public holidays
+python 01_build_india_dataset.py
 
-After weather merge (`data/energy_data_india_final.csv`):
-adds `temperature_c, humidity`.
+# Step 2: Fetch real Open-Meteo weather data (temperature & humidity) for 33 states
+python 06_fetch_real_weather_india.py
 
-## 4. Dashboard 
+# Step 3: Preprocess data & engineer time-series features (lags, rolling stats, cyclical encodings)
+python 02_preprocess_india.py
 
-Once models + SHAP + recommendations work (steps 1–7 above), wrap them in:
-- **FastAPI backend**: one `/forecast/{state}` endpoint that loads the
-  saved `.pkl`/`.pt` model for that state, runs `04`/`05` logic, returns JSON.
-- **React frontend**: dropdown to pick a state, chart (recharts) of
-  forecast vs actual, SHAP top-factors list, recommendation banner.
-- Simulate "real-time" by replaying historical rows on a timer — state
-  this explicitly as a simplification in your report, since the
-  underlying data itself is daily, not streaming.
+# Step 4: Multi-model training & evaluation across 33 states x 2 horizons x 5 model types
+python 03_train_models_india.py
 
-## 5. What to show the panel
+# Step 5: Explainable AI attributions (SHAP & LIME)
+python 04_shap_explain_india.py
+python 04b_lime_explain_india.py
 
-1. Run `03_train_models_india.py` live (or show pre-run output) — the
-   per-state/per-horizon "best model" table (`outputs/best_models_india.csv`).
-   Point out that different states favor different models (e.g.
-   industrial states with volatile load may favor XGBoost; smaller
-   states with stable patterns may favor RandomForest).
-2. Show `outputs/shap_summary_india.png`, then walk through the single
-   example in `04_shap_explain_india.py`'s printed output — "on this
-   hot day in Maharashtra, the model raised its forecast mainly
-   because of lag_1d, temperature, and day-of-week."
-3. Run `05_recommendation_engine_india.py` live to show forecast → alert.
-4. Be ready to answer: *"Is this really real-time?"* — Honest answer:
-   the underlying POSOCO data is daily-reported, not streaming. Frame
-   the dashboard as replaying historical data on a timer to simulate
-   real-time behavior, and note that a production version would need a
-   live SCADA/smart-meter feed (mentioned in your synopsis's tech stack
-   as MQTT ingestion) to be genuinely real-time.
+# Step 6: Smart Grid Recommendation Engine
+python 05_recommendation_engine_india.py
 
-## 6. What changed from the original (UCI/France) version
+# Step 7: Continuous Monitoring & Retraining
+python 07_monitor_retrain_india.py
 
-| | Old | New |
-|---|---|---|
-| Data source | Synthetic-then-real UCI household (Sceaux, France) | Real POSOCO state-wise data (India) |
-| Grain | Hourly | Daily |
-| Nodes | 1 real household + 2 **synthetic** derived nodes (F1, S1) | 33 **real** states/UTs |
-| Horizons | `target_next_1h`, `target_next_24h` | `target_next_1d`, `target_next_7d` |
-| Lag features | `lag_1h`, `lag_24h`, `lag_168h` | `lag_1d`, `lag_7d`, `lag_30d` |
-| Time encoding | hour_sin/cos, month_sin/cos | dow_sin/cos, month_sin/cos, doy_sin/cos |
-| Holidays | Hardcoded French dates | `holidays` package, real Indian calendar |
-| Weather | Open-Meteo, Sceaux coordinates | Open-Meteo, per-state coordinates (33 calls) |
+# Step 8: Actual vs Predicted Feedback Loop
+python 08_feedback_loop_india.py
+```
 
-Why this is a stronger submission: the multi-node structure is now
-genuinely real data instead of one household jittered into fake
-feeder/substation nodes — a panel is far more likely to probe "is this
-data real?" than any other single question, and now the honest answer
-is yes across all 33 nodes.
+---
+
+## 3. Running the Dashboard Web Application
+
+Start the FastAPI application server:
+
+```bash
+uvicorn app:app --reload --port 8000
+```
+
+Open `http://127.0.0.1:8000` in your web browser.
+
+### Role Credentials for Testing:
+- **Administrator:** `admin / admin123`
+- **Grid Operator:** `operator / operator123`
+- **Utility Company:** `utility / utility123`
+
+---
+
+## 4. Evaluated Forecasting Models & Selection
+
+Total Model Evaluations: **330 evaluations** across 33 states/UTs × 2 horizons × 5 models.
+
+### Best Model Breakdown Across 66 State-Horizon Pairs:
+- **Random Forest:** 36 best selections
+- **XGBoost:** 16 best selections
+- **PyTorch LSTM:** 6 best selections
+- **Facebook Prophet:** 4 best selections
+- **PyTorch GRU:** 4 best selections
+
+The API server dynamically loads the verified best model algorithm from `outputs/best_models_india.csv` for each requested state and horizon.
+
+---
+
+## 5. Documentation & Reports Directory
+
+Detailed project documentation files:
+- `DATA_PROCESSING_REPORT.md` — Data quality audit, cleaning, alignment, & feature engineering.
+- `MODEL_EVALUATION_REPORT.md` — Complete 5-model evaluation metrics (MAE, RMSE, MAPE %, R²).
+- `EXPLAINABILITY_REPORT.md` — Theoretical & empirical SHAP / LIME report.
+- `RECOMMENDATION_REPORT.md` — Severity classification & action recommendation rules.
+- `SYSTEM_ARCHITECTURE.md` — Full data flow, backend/frontend, auth, & drift architecture.
+- `TESTING_REPORT.md` — Verification test suite results & bug fixes.

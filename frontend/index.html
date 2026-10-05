@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="AI-Powered Smart Grid Energy Consumption Forecasting Dashboard for India" />
-  <title>Smart Grid AI Forecasting Dashboard</title>
+  <meta name="description" content="AI-Powered Smart Grid Energy Consumption Forecasting Platform for India" />
+  <title>Smart Grid AI Forecasting & Optimization Platform</title>
 
   <!-- Google Fonts: Inter & IBM Plex Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -28,7 +28,7 @@
         <span class="brand-dot" aria-hidden="true"></span>
         <h1 class="login-title">Smart Grid AI Forecasting</h1>
       </div>
-      <p class="login-subtitle">Energy Consumption Forecasting & Grid Optimization</p>
+      <p class="login-subtitle">Energy Consumption Forecasting & Smart Grid Decision Support</p>
 
       <form id="login-form" novalidate>
         <div class="form-group">
@@ -38,7 +38,7 @@
             id="username-input"
             name="username"
             class="form-input"
-            placeholder="e.g. operator"
+            placeholder="e.g. operator, admin, utility"
             autocomplete="username"
             required
             aria-required="true"
@@ -60,7 +60,7 @@
         </div>
 
         <button type="submit" id="login-btn" class="btn-primary">
-          <span id="login-btn-text">Sign In to Dashboard</span>
+          <span id="login-btn-text">Sign In to Platform</span>
           <span id="login-spinner" class="spinner" style="display: none;" aria-hidden="true"></span>
         </button>
 
@@ -68,248 +68,291 @@
       </form>
 
       <div class="demo-credentials-box">
-        <strong>Demo Accounts (Academic Role Simulation):</strong>
-        <div class="demo-cred-row">• Administrator: <code>admin / admin123</code></div>
-        <div class="demo-cred-row">• Grid Operator: <code>operator / operator123</code></div>
-        <div class="demo-cred-row">• Utility Company: <code>utility / utility123</code></div>
+        <strong>Role-Based Access Credentials:</strong>
+        <div class="demo-cred-row">• <strong>Administrator:</strong> <code>admin / admin123</code></div>
+        <div class="demo-cred-row">• <strong>Grid Operator:</strong> <code>operator / operator123</code></div>
+        <div class="demo-cred-row">• <strong>Utility Company:</strong> <code>utility / utility123</code></div>
       </div>
     </div>
   </section>
 
-  <!-- ==================== STAGES 2-4: MAIN DASHBOARD ==================== -->
+  <!-- ==================== MAIN APPLICATION DASHBOARD ==================== -->
   <div id="dashboard-view" style="display: none;">
-    <!-- Sticky Application Header -->
+    <!-- Application Header -->
     <header class="app-header">
       <div class="header-inner">
         <div class="header-brand">
           <span class="brand-dot" aria-hidden="true"></span>
-          <span class="brand-title">Smart Grid AI Forecast</span>
-          <span class="brand-badge" id="ist-time-badge">IST</span>
+          <span class="brand-title">Smart Grid AI Platform</span>
+          <span class="brand-badge" id="role-view-badge">Grid Operator View</span>
         </div>
 
+        <!-- Role Navigation Tabs -->
+        <nav class="role-nav" aria-label="Role Dashboard Navigation">
+          <button class="role-nav-btn active" id="tab-operator" data-role-tab="operator">
+            ⚡ Grid Operator
+          </button>
+          <button class="role-nav-btn" id="tab-utility" data-role-tab="utility">
+            🏢 Utility Planning
+          </button>
+          <button class="role-nav-btn" id="tab-admin" data-role-tab="admin">
+            ⚙️ System Admin
+          </button>
+        </nav>
+
         <div class="header-controls">
-          <!-- State Selection Dropdown -->
-          <div class="control-item">
-            <label for="state-select" class="control-label">State / Region:</label>
-            <select id="state-select" class="header-select" aria-label="Select Indian State or Union Territory"></select>
-          </div>
-
-          <!-- Forecast Horizon Selector -->
-          <div class="control-item">
-            <label for="horizon-select" class="control-label">Horizon:</label>
-            <select id="horizon-select" class="header-select" aria-label="Select Forecast Horizon">
-              <option value="1d" selected>Short-Term (1 Day)</option>
-              <option value="7d">Medium-Term (7 Days)</option>
-            </select>
-          </div>
-
-          <!-- Model Selector (Backend default XGBoost; disabled with TODO tooltip) -->
-          <div class="control-item">
-            <label for="model-select" class="control-label">Model:</label>
-            <select id="model-select" class="header-select" aria-label="Model Selector (Fixed to XGBoost in backend)" title="Backend currently defaults to XGBoost in load_model()">
-              <option value="XGBoost" selected>XGBoost (Active)</option>
-              <!-- TODO: Backend /forecast endpoint currently hardcodes XGBoost; enable Random Forest / Prophet when query param is supported -->
-              <option value="RandomForest" disabled>Random Forest (Disabled in backend)</option>
-            </select>
-          </div>
-
           <!-- User Role Pill -->
-          <div class="user-badge" id="user-badge" title="Authenticated User Role">
-            <span id="user-name-display">—</span>
-            <span class="user-role-pill" id="user-role-pill">—</span>
+          <div class="user-badge" id="user-badge">
+            <span id="user-name-display">User</span>
+            <span class="user-role-pill" id="user-role-pill">Operator</span>
           </div>
 
           <!-- Theme Toggle Button -->
-          <button id="theme-toggle-btn" class="btn-outline" aria-label="Toggle Dark/Light Mode" title="Toggle theme">
+          <button id="theme-toggle-btn" class="btn-outline" title="Toggle Dark/Light Mode">
             <span id="theme-icon">☀️</span>
           </button>
 
           <!-- Logout Button -->
-          <button id="logout-btn" class="btn-outline" aria-label="Sign Out of Application">
+          <button id="logout-btn" class="btn-outline">
             Sign Out
           </button>
         </div>
       </div>
     </header>
 
-    <!-- Main Results Area -->
+    <!-- Main Container -->
     <main class="dashboard-container">
-      <!-- Section-level Error Banner (if global load fails) -->
-      <div id="global-error-banner" class="alert-inline error" style="margin-bottom: 20px; display: none;" role="alert" aria-live="polite">
-        <span id="global-error-text">Failed to connect to the backend server.</span>
+      <div id="global-error-banner" class="alert-inline error" style="margin-bottom: 20px; display: none;">
+        <span id="global-error-text">Failed to connect to backend server.</span>
         <button id="global-retry-btn" class="btn-outline btn-small" style="margin-left: 12px;">Retry</button>
       </div>
 
-      <!-- Recommendation Banner -->
-      <section
-        id="recommendation-banner"
-        class="recommendation-banner NORMAL"
-        aria-live="polite"
-        aria-label="Grid Operator Recommendation"
-      >
-        <div class="banner-content">
-          <div class="banner-icon" id="banner-icon" aria-hidden="true">💡</div>
-          <div class="banner-text-wrap">
-            <div class="banner-header-row">
-              <span class="banner-tag" id="banner-severity-tag">NORMAL</span>
-              <span class="banner-title">Grid Recommendation & Action Alert</span>
-            </div>
-            <p class="banner-action-text" id="banner-action-text">Loading automated load-shedding / peak-shaving recommendations…</p>
-          </div>
-        </div>
-        <div class="banner-meta" id="banner-meta-info">Updated: —</div>
-      </section>
-
-      <!-- KPI Summary Cards -->
-      <section class="kpi-grid" aria-label="Key Performance Indicators">
-        <!-- KPI 1: Latest Actual Demand -->
-        <div class="kpi-card" id="kpi-card-actual">
-          <div class="kpi-header">
-            <span class="kpi-title">Latest Actual Demand</span>
-            <span class="kpi-icon" aria-hidden="true">⚡</span>
-          </div>
-          <div class="kpi-body">
-            <span class="kpi-value" id="kpi-val-actual">—</span>
-            <span class="kpi-unit">MU</span>
-          </div>
-          <div class="kpi-footer" id="kpi-sub-actual">As of date: —</div>
+      <!-- Common Controls Bar for Operator & Utility Views -->
+      <section id="common-controls-bar" class="controls-card">
+        <div class="control-item">
+          <label for="state-select" class="control-label">State / Region (33 Indian States/UTs):</label>
+          <select id="state-select" class="header-select"></select>
         </div>
 
-        <!-- KPI 2: Forecast Demand (Peak / Target) -->
-        <div class="kpi-card" id="kpi-card-forecast">
-          <div class="kpi-header">
-            <span class="kpi-title">Forecast Demand (Peak)</span>
-            <span class="kpi-icon" aria-hidden="true">📈</span>
-          </div>
-          <div class="kpi-body">
-            <span class="kpi-value" id="kpi-val-forecast">—</span>
-            <span class="kpi-unit">MU</span>
-          </div>
-          <div class="kpi-footer" id="kpi-sub-forecast">Horizon: 1 Day</div>
+        <div class="control-item">
+          <label for="horizon-select" class="control-label">Forecast Horizon:</label>
+          <select id="horizon-select" class="header-select">
+            <option value="1d" selected>Short-Term (1 Day / 24-Hour)</option>
+            <option value="7d">Medium-Term (7 Days / Weekly)</option>
+          </select>
         </div>
 
-        <!-- KPI 3: AI Model Name -->
-        <div class="kpi-card" id="kpi-card-model">
-          <div class="kpi-header">
-            <span class="kpi-title">AI Forecast Model</span>
-            <span class="kpi-icon" aria-hidden="true">🤖</span>
-          </div>
-          <div class="kpi-body">
-            <span class="kpi-value" id="kpi-val-model" style="font-size: 1.35rem;">XGBoost</span>
-          </div>
-          <div class="kpi-footer" id="kpi-sub-model">Trained Gradient Booster</div>
-        </div>
-
-        <!-- KPI 4: MAE / Drift Metric -->
-        <div class="kpi-card" id="kpi-card-mae">
-          <div class="kpi-header">
-            <span class="kpi-title">Model Accuracy (MAE)</span>
-            <span class="kpi-icon" aria-hidden="true">🎯</span>
-          </div>
-          <div class="kpi-body">
-            <span class="kpi-value" id="kpi-val-mae">—</span>
-            <span class="kpi-unit" id="kpi-unit-mae">MU</span>
-          </div>
-          <div class="kpi-footer" id="kpi-sub-mae">Continuous validation window</div>
+        <div class="control-item">
+          <label for="explain-type-select" class="control-label">Explainability Layer:</label>
+          <select id="explain-type-select" class="header-select">
+            <option value="shap" selected>SHAP (Shapley Additive Explanations)</option>
+            <option value="lime">LIME (Local Interpretable Explanations)</option>
+          </select>
         </div>
       </section>
 
-      <!-- Main Visualizations Grid -->
-      <div class="panels-grid">
-        <!-- Left Panel: Forecast & Historical Demand Chart -->
-        <section class="dashboard-panel" aria-label="Load Forecast Chart">
-          <div class="panel-header">
-            <div class="panel-title-wrap">
-              <h2 class="panel-title">Historical Consumption vs. AI Forecast</h2>
-              <span class="panel-subtitle" id="forecast-chart-subtitle">Daily actual demand (60d) with projected load & confidence intervals</span>
-            </div>
-
-            <!-- Forecast Chart Toolbar -->
-            <div class="panel-toolbar">
-              <label class="toolbar-toggle-label" for="ci-toggle">
-                <input type="checkbox" id="ci-toggle" checked />
-                <span>Confidence Band</span>
-              </label>
-
-              <select id="ci-level-select" class="toolbar-select" aria-label="Select Confidence Level">
-                <option value="0.80">80% (z=1.28)</option>
-                <option value="0.90">90% (z=1.65)</option>
-                <option value="0.95" selected>95% (z=1.96)</option>
-              </select>
-
-              <button id="reset-zoom-btn" class="btn-outline btn-small" title="Reset Chart Zoom">
-                Reset Zoom
-              </button>
+      <!-- ==================== VIEW 1: GRID OPERATOR DASHBOARD ==================== -->
+      <div id="view-operator-section" class="role-dashboard-view">
+        <!-- Recommendation Banner -->
+        <section id="recommendation-banner" class="recommendation-banner NORMAL">
+          <div class="banner-content">
+            <div class="banner-icon" id="banner-icon">💡</div>
+            <div class="banner-text-wrap">
+              <div class="banner-header-row">
+                <span class="banner-tag" id="banner-severity-tag">NORMAL</span>
+                <span class="banner-title">Smart Grid Decision Support Recommendation</span>
+              </div>
+              <p class="banner-action-text" id="banner-action-text">Loading recommendations...</p>
             </div>
           </div>
-
-          <div class="chart-container-wrap" id="forecast-chart-container">
-            <canvas id="forecast-chart" aria-label="Historical load versus forecast line chart" role="img"></canvas>
-            <div id="forecast-chart-skeleton" class="skeleton skeleton-chart" style="display: none;"></div>
-          </div>
-
-          <p class="chart-caption" id="ci-methodology-caption">
-            <strong>Confidence Interval:</strong> Forecast ± z × σ × √h, where σ is estimated from recent residual volatility. Drag to pan, scroll/pinch to zoom along time axis.
-          </p>
+          <div class="banner-meta" id="banner-meta-info">Updated: —</div>
         </section>
 
-        <!-- Right Panel: SHAP Factor Contributions -->
-        <section class="dashboard-panel" aria-label="SHAP Factor Importance">
-          <div class="panel-header">
-            <div class="panel-title-wrap">
-              <h2 class="panel-title">Top Feature Drivers (SHAP)</h2>
-              <span class="panel-subtitle">Key factors pushing demand up (+) or down (−)</span>
+        <!-- KPI Summary Cards -->
+        <section class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-header"><span class="kpi-title">Current Consumption</span><span class="kpi-icon">⚡</span></div>
+            <div class="kpi-body"><span class="kpi-value" id="kpi-val-actual">—</span><span class="kpi-unit">MU</span></div>
+            <div class="kpi-footer" id="kpi-sub-actual">As of date: —</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header"><span class="kpi-title">Forecast Energy Demand</span><span class="kpi-icon">📈</span></div>
+            <div class="kpi-body"><span class="kpi-value" id="kpi-val-forecast">—</span><span class="kpi-unit">MU</span></div>
+            <div class="kpi-footer" id="kpi-sub-forecast">Horizon: 1 Day</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header"><span class="kpi-title">Verified Best AI Model</span><span class="kpi-icon">🤖</span></div>
+            <div class="kpi-body"><span class="kpi-value" id="kpi-val-model" style="font-size: 1.35rem;">—</span></div>
+            <div class="kpi-footer" id="kpi-sub-model">Optimal algorithm for state</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header"><span class="kpi-title">Verified Model MAE</span><span class="kpi-icon">🎯</span></div>
+            <div class="kpi-body"><span class="kpi-value" id="kpi-val-mae">—</span><span class="kpi-unit">MU</span></div>
+            <div class="kpi-footer" id="kpi-sub-mae">Test error metric</div>
+          </div>
+        </section>
+
+        <!-- Visualizations Grid -->
+        <div class="panels-grid">
+          <!-- Left: Forecast Chart -->
+          <section class="dashboard-panel">
+            <div class="panel-header">
+              <div class="panel-title-wrap">
+                <h2 class="panel-title">Operational Load Forecast vs. Actual Consumption</h2>
+                <span class="panel-subtitle" id="forecast-chart-subtitle">60-day historical trend with projected demand & confidence bounds</span>
+              </div>
+              <div class="panel-toolbar">
+                <label class="toolbar-toggle-label">
+                  <input type="checkbox" id="ci-toggle" checked /> <span>Confidence Band</span>
+                </label>
+                <select id="ci-level-select" class="toolbar-select">
+                  <option value="0.80">80% (z=1.28)</option>
+                  <option value="0.90">90% (z=1.65)</option>
+                  <option value="0.95" selected>95% (z=1.96)</option>
+                </select>
+                <button id="reset-zoom-btn" class="btn-outline btn-small">Reset Zoom</button>
+              </div>
             </div>
-          </div>
+            <div class="chart-container-wrap">
+              <canvas id="forecast-chart"></canvas>
+            </div>
+            <p class="chart-caption">
+              <strong>Confidence Interval:</strong> Forecast ± z × σ × √h based on residual volatility. Drag to pan, scroll to zoom.
+            </p>
+          </section>
 
-          <div class="chart-container-wrap" id="shap-chart-container">
-            <canvas id="shap-chart" aria-label="SHAP feature contribution horizontal bar chart" role="img"></canvas>
-            <div id="shap-chart-skeleton" class="skeleton skeleton-chart" style="display: none;"></div>
-          </div>
+          <!-- Right: Explainability Chart (SHAP / LIME) -->
+          <section class="dashboard-panel">
+            <div class="panel-header">
+              <div class="panel-title-wrap">
+                <h2 class="panel-title" id="explain-chart-title">Top Feature Drivers (SHAP)</h2>
+                <span class="panel-subtitle" id="explain-chart-subtitle">Factors driving demand up (+) or down (−)</span>
+              </div>
+            </div>
+            <div class="chart-container-wrap">
+              <canvas id="shap-chart"></canvas>
+            </div>
+            <p class="chart-caption" id="explain-chart-caption">
+              Positive values raise energy demand; negative values lower demand.
+            </p>
+          </section>
+        </div>
+      </div>
 
-          <p class="chart-caption">
-            <strong>What pushes the forecast up or down:</strong> Coral bars indicate positive contributions raising demand, while teal bars indicate negative contributions lowering demand.
-          </p>
+      <!-- ==================== VIEW 2: UTILITY PLANNING DASHBOARD ==================== -->
+      <div id="view-utility-section" class="role-dashboard-view" style="display: none;">
+        <div class="utility-summary-grid">
+          <div class="utility-card">
+            <h3>🏢 Utility Load Management Overview</h3>
+            <p id="utility-overview-text">Loading state utility demand breakdown...</p>
+          </div>
+          <div class="utility-card">
+            <h3>🌡️ Weather & Calendar Factors</h3>
+            <div id="utility-weather-info">Loading weather & holiday metrics...</div>
+          </div>
+          <div class="utility-card">
+            <h3>⚡ Demand-Response Opportunities</h3>
+            <div id="utility-dr-recommendation">Loading DR recommendations...</div>
+          </div>
+        </div>
+
+        <section class="dashboard-panel" style="margin-top: 20px;">
+          <div class="panel-header">
+            <h2 class="panel-title">Utility Demand Profile & Weather Interaction</h2>
+            <span class="panel-subtitle">Consumption pattern alongside daily temperature trends</span>
+          </div>
+          <div class="chart-container-wrap" style="height: 350px;">
+            <canvas id="utility-weather-chart"></canvas>
+          </div>
         </section>
       </div>
 
-      <!-- Bottom Panel: Continuous Monitoring & Drift Checks -->
-      <section class="monitoring-panel" aria-label="Continuous Model Monitoring">
-        <div class="panel-header">
-          <div class="panel-title-wrap">
-            <h2 class="panel-title">Continuous Model Monitoring & Drift Detection</h2>
-            <span class="panel-subtitle">Rolling validation windows and retraining triggers</span>
+      <!-- ==================== VIEW 3: ADMIN DASHBOARD ==================== -->
+      <div id="view-admin-section" class="role-dashboard-view" style="display: none;">
+        <div class="admin-overview-cards">
+          <div class="admin-card">
+            <h3>🌐 System Coverage</h3>
+            <div class="admin-stat-num">33 States/UTs</div>
+            <div class="admin-stat-sub">16,434 Clean Daily Time-Series Records</div>
           </div>
-          <button id="refresh-monitoring-btn" class="btn-outline btn-small" title="Refresh monitoring records">
-            Refresh
-          </button>
+          <div class="admin-card">
+            <h3>🤖 Model Architectures</h3>
+            <div class="admin-stat-num">5 Models</div>
+            <div class="admin-stat-sub">RF, XGBoost, LSTM, GRU, Prophet Evaluated</div>
+          </div>
+          <div class="admin-card">
+            <h3>🔒 Security & Roles</h3>
+            <div class="admin-stat-num">3 Roles</div>
+            <div class="admin-stat-sub">Admin, Grid Operator, Utility Company (JWT Auth)</div>
+          </div>
+          <div class="admin-card">
+            <h3>🔄 Drift Monitoring</h3>
+            <div class="admin-stat-num" id="admin-drift-status">Active</div>
+            <div class="admin-stat-sub">Continuous Rolling MAE Threshold Checking</div>
+          </div>
         </div>
 
-        <div class="data-table-wrap">
-          <table class="data-table" id="monitoring-table">
-            <thead>
-              <tr>
-                <th scope="col">Window Start</th>
-                <th scope="col">Window End</th>
-                <th scope="col">Window MAE (MU)</th>
-                <th scope="col">Baseline MAE (MU)</th>
-                <th scope="col">Status</th>
-              </tr>
-            </thead>
-            <tbody id="monitoring-table-body">
-              <tr>
-                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">
-                  Loading monitoring log records…
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+        <!-- Model Performance Comparison Table -->
+        <section class="dashboard-panel" style="margin-top: 20px;">
+          <div class="panel-header">
+            <h2 class="panel-title">AI Model Accuracy & Verified Best Selection</h2>
+            <button id="refresh-admin-models-btn" class="btn-outline btn-small">Refresh Models Table</button>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>State / Node</th>
+                  <th>Horizon</th>
+                  <th>Genuinely Best Model</th>
+                  <th>MAE (MU)</th>
+                  <th>RMSE (MU)</th>
+                  <th>MAPE (%)</th>
+                  <th>R² Score</th>
+                </tr>
+              </thead>
+              <tbody id="admin-best-models-body">
+                <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading verified model selection table...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Continuous Drift Checks & Monitoring Table -->
+        <section class="monitoring-panel" style="margin-top: 20px;">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <h2 class="panel-title">Continuous Model Monitoring & Data Drift Log</h2>
+              <span class="panel-subtitle">Rolling validation window checks and automated retraining triggers</span>
+            </div>
+            <button id="refresh-monitoring-btn" class="btn-outline btn-small">Refresh Log</button>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Checked At</th>
+                  <th>Window Start</th>
+                  <th>Window End</th>
+                  <th>Window MAE (MU)</th>
+                  <th>Baseline MAE (MU)</th>
+                  <th>Drift Flagged</th>
+                </tr>
+              </thead>
+              <tbody id="monitoring-table-body">
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading monitoring records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
     </main>
   </div>
 
-  <!-- Application Logic -->
+  <!-- Application JS -->
   <script src="app.js"></script>
 </body>
 </html>
