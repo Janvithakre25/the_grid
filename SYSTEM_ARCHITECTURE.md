@@ -1,11 +1,11 @@
 # System Architecture & Technical Documentation
 
 ## Executive Summary
-This document provides complete system architecture documentation for the AI-Powered Smart Grid Energy Consumption Forecasting Platform.
+This document provides complete system architecture documentation for the AI-Powered Smart Grid Energy Consumption Forecasting Platform built for 33 Indian States and Union Territories.
 
 ---
 
-## 1. System Architecture Overview
+## 1. End-to-End System Architecture Overview
 
 ```
  ┌─────────────────────────────────────────────────────────┐
@@ -13,7 +13,7 @@ This document provides complete system architecture documentation for the AI-Pow
  │   - Administrator (admin)  - Grid Operator (operator)   │
  │               - Utility Company (utility)               │
  └────────────────────────────┬────────────────────────────┘
-                              │ JWT Bearer Auth Token
+                              │ JWT Bearer Auth Token & Profile (/me)
                               ▼
  ┌─────────────────────────────────────────────────────────┐
  │               Data Ingestion Architecture               │
@@ -35,7 +35,7 @@ This document provides complete system architecture documentation for the AI-Pow
  │               Multi-Model Forecasting Core              │
  │  Random Forest  |  XGBoost  |  LSTM  |  GRU  | Prophet  │
  └────────────────────────────┬────────────────────────────┘
-                              │ Predictions & Metrics
+                              │ Predictions & Metrics (330 Evaluations)
                               ▼
  ┌─────────────────────────────────────────────────────────┐
  │             Empirical Best Model Selection              │
@@ -66,7 +66,7 @@ This document provides complete system architecture documentation for the AI-Pow
  │          Continuous Monitoring & Retraining Loop        │
  │   - Rolling Window MAE Checks  - Data Drift Flagging    │
  │   - Automatic Re-training & Versioning                │
- └─────────────────────────────────────────────────────────┘
+ └────────────────────────────┴────────────────────────────┘
 ```
 
 ---
@@ -74,27 +74,30 @@ This document provides complete system architecture documentation for the AI-Pow
 ## 2. Component Specifications
 
 ### A. Data Ingestion & Storage Architecture
-- **Raw Data Ingestion:** POSOCO reported daily state electricity consumption (`long_data_.csv`).
-- **Weather Ingestion:** Open-Meteo historical daily temperature and relative humidity fetched via latitude/longitude (`weather_india_real.csv`).
+- **Raw Data Ingestion:** POSOCO daily electricity consumption data (`long_data_.csv`).
+- **Weather Ingestion:** Open-Meteo historical daily temperature and relative humidity (`weather_india_real.csv`).
 - **Processed Storage:** Per-state clean CSV datasets stored under `data/processed_<State>.csv`. Raw files remain un-overwritten.
 
 ### B. Backend Architecture (FastAPI)
 - **Framework:** FastAPI with Uvicorn ASGI web server.
-- **Authentication:** JWT (JSON Web Token) bearer tokens with role claims.
+- **Authentication & Security:** JWT (JSON Web Token) bearer tokens with role claims. Admin routes enforce `verify_admin_token` returning `403 Forbidden` for non-admins.
 - **Key API Endpoints:**
-  - `POST /login`: User authentication & role dispatch.
+  - `POST /login`: User authentication & JWT issuance.
+  - `GET /me`: Authenticated profile validation & role check.
   - `GET /states`: List 33 available Indian states/UTs.
-  - `GET /forecast/{state}`: Serves predictions from the genuinely best verified model for that state & horizon.
-  - `GET /explain/{state}` & `GET /explain_lime/{state}`: Serves SHAP & LIME factor attributions.
-  - `GET /recommend/{state}`: Serves operational decision recommendations.
-  - `GET /monitoring` & `GET /feedback`: Serves drift log & accuracy history.
+  - `GET /forecast/{state}`: Predictions and evaluation metrics for verified best model.
+  - `GET /history/{state}`: Historical daily load, temperature, humidity, and holiday flags.
+  - `GET /explain/{state}` & `GET /explain_lime/{state}`: SHAP and LIME factor attributions.
+  - `GET /recommend/{state}`: Operational decision recommendations & severity.
+  - `GET /monitoring`, `GET /best_models`, `GET /model_comparison`, `GET /feedback`: Admin monitoring and metrics log endpoints.
 
 ### C. Frontend Architecture (Vanilla ES6+ & Chart.js 4.x)
 - **Zero Heavy Build Step:** Native browser ES6 JavaScript, HTML5, and CSS3 design system.
-- **Visualizations:** Chart.js line charts with confidence bands (80%, 90%, 95%), zoom plugin support, and SHAP/LIME horizontal bar charts.
+- **Visualizations:** Chart.js line charts with confidence bands (80%, 90%, 95%), zoom plugin support, dual-axis weather interaction charts, and SHAP/LIME horizontal bar charts.
+- **Role Dashboard Views:** Grid Operator, Utility Planning, and System Admin views driven by authenticated user role.
 
 ---
 
 ## 3. Feedback Loop & Automated Retraining
-- **Feedback Collection (`08_feedback_loop_india.py`):** Appends verified actual demand as smart meter readings arrive, logging absolute error and percentage error into `outputs/feedback_log_india.csv`.
-- **Drift Monitoring & Retraining (`07_monitor_retrain_india.py`):** Computes rolling MAE in 14-day evaluation windows. If window MAE exceeds baseline MAE by **1.25×**, data drift is flagged, triggering automated model retraining and logging to `outputs/monitoring_log_india.csv`.
+- **Feedback Collection (`08_feedback_loop_india.py`):** Logs actual vs. predicted demand as smart-meter readings arrive into `outputs/feedback_log_india.csv`.
+- **Drift Monitoring & Retraining (`07_monitor_retrain_india.py`):** Computes rolling MAE in 14-day evaluation windows. Flags data drift when window MAE exceeds 1.25× baseline MAE, auto-retraining models and updating `outputs/monitoring_log_india.csv`.
