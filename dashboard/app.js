@@ -63,12 +63,22 @@ const viewAdminSection = document.getElementById("view-admin-section");
 const commonControlsBar = document.getElementById("common-controls-bar");
 
 // Initialize Application
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
   setupEventListeners();
 
   if (authToken) {
-    showDashboardView();
+    try {
+      const me = await apiFetch("/me");
+      userRole = me.role;
+      userName = me.name;
+      sessionStorage.setItem("user_role", userRole);
+      sessionStorage.setItem("user_name", userName);
+      showDashboardView();
+    } catch (err) {
+      console.warn("Stored session invalid or expired:", err);
+      handleLogout();
+    }
   } else {
     showLoginView();
   }
@@ -145,6 +155,8 @@ async function handleLogin(e) {
     sessionStorage.setItem("user_role", userRole);
     sessionStorage.setItem("user_name", userName);
 
+    if (loginErrorAlert) loginErrorAlert.style.display = "none";
+
     showDashboardView();
   } catch (err) {
     const errorMsg = (err.message && err.message.includes("Failed to fetch"))
@@ -159,6 +171,7 @@ function handleLogout() {
   userRole = null;
   userName = null;
   sessionStorage.clear();
+  if (loginErrorAlert) loginErrorAlert.style.display = "none";
   showLoginView();
 }
 
@@ -174,13 +187,27 @@ function showDashboardView() {
   if (userNameDisplay) userNameDisplay.textContent = userName || "User";
   if (userRolePill) userRolePill.textContent = userRole || "User";
 
-  // Set default view based on authenticated role
-  if (userRole === "Administrator") {
-    switchRoleView("admin");
+  // Role Tab Visibility based on authenticated user's role
+  const adminTab = document.getElementById("tab-admin");
+  const utilityTab = document.getElementById("tab-utility");
+  const operatorTab = document.getElementById("tab-operator");
+
+  if (userRole === "Grid Operator") {
+    if (adminTab) adminTab.style.display = "none";
+    if (utilityTab) utilityTab.style.display = "none";
+    if (operatorTab) operatorTab.style.display = "inline-flex";
+    switchRoleView("operator");
   } else if (userRole === "Utility Company") {
+    if (adminTab) adminTab.style.display = "none";
+    if (utilityTab) utilityTab.style.display = "inline-flex";
+    if (operatorTab) operatorTab.style.display = "none";
     switchRoleView("utility");
   } else {
-    switchRoleView("operator");
+    // Administrator has access to all role tabs
+    if (adminTab) adminTab.style.display = "inline-flex";
+    if (utilityTab) utilityTab.style.display = "inline-flex";
+    if (operatorTab) operatorTab.style.display = "inline-flex";
+    switchRoleView("admin");
   }
 
   loadStatesList();
@@ -206,6 +233,11 @@ function toggleTheme() {
 // ROLE DASHBOARD VIEW SWITCHING
 // ---------------------------------------------------------------
 function switchRoleView(roleTab) {
+  // Prevent unauthorized role tab switching
+  if (roleTab === "admin" && userRole !== "Administrator") {
+    return;
+  }
+
   document.querySelectorAll(".role-nav-btn").forEach(btn => btn.classList.remove("active"));
   const activeBtn = document.querySelector(`[data-role-tab="${roleTab}"]`);
   if (activeBtn) activeBtn.classList.add("active");

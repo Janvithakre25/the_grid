@@ -37089,25 +37089,25 @@
 /***/ })
 /******/ ]);
 //# sourceMappingURL=bundle.js.map </script></head><body>
-        <div class="lime top_div" id="top_divW4C4XU9QNLTWRLH"></div>
+        <div class="lime top_div" id="top_divXUGYELS187FUEEW"></div>
         
         <script>
-        var top_div = d3.select('#top_divW4C4XU9QNLTWRLH').classed('lime top_div', true);
+        var top_div = d3.select('#top_divXUGYELS187FUEEW').classed('lime top_div', true);
         
         
                     var pp_div = top_div.append('div')
                                         .classed('lime predicted_value', true);
                     var pp_svg = pp_div.append('svg').style('width', '100%');
-                    var pp = new lime.PredictedValue(pp_svg, 432.6495056152344, 371.83306884765625, 508.5916748046875);
+                    var pp = new lime.PredictedValue(pp_svg, 427.0892333984375, 364.7215270996094, 507.6634521484375);
                     
         var exp_div;
             var exp = new lime.Explanation(["negative", "positive"]);
         
             exp_div = top_div.append('div').classed('lime explanation', true);
-            exp.show([["403.70 < lag_1d <= 432.00", -7.545735147417961], ["433.70 < lag_7d <= 464.00", -6.564968880956683], ["roll_mean_30d <= 425.32", 5.579604045777709], ["414.46 < roll_mean_7d <= 436.17", 3.818111350115386], ["403.40 < lag_30d <= 431.00", -3.1782077102070447], ["roll_std_7d <= 15.12", -3.0358815344935874]], 1, exp_div);
+            exp.show([["433.70 < lag_7d <= 464.00", -5.42811928081264], ["403.70 < lag_1d <= 432.00", -4.827661883496019], ["roll_std_7d <= 15.12", -3.0713745958821645], ["roll_mean_30d <= 425.32", 2.5697246868390793], ["414.46 < roll_mean_7d <= 436.17", 1.822544751139024], ["temperature_c > 28.60", 1.1151177217877337]], 1, exp_div);
             
         var raw_div = top_div.append('div');
-            exp.show_raw_tabular([["lag_1d", "408.30", -7.545735147417961], ["lag_7d", "443.00", -6.564968880956683], ["roll_mean_30d", "401.49", 5.579604045777709], ["roll_mean_7d", "432.23", 3.818111350115386], ["lag_30d", "425.10", -3.1782077102070447], ["roll_std_7d", "13.20", -3.0358815344935874]], 1, raw_div);
+            exp.show_raw_tabular([["lag_7d", "443.00", -5.42811928081264], ["lag_1d", "408.30", -4.827661883496019], ["roll_std_7d", "13.20", -3.0713745958821645], ["roll_mean_30d", "401.49", 2.5697246868390793], ["roll_mean_7d", "432.23", 1.822544751139024], ["temperature_c", "33.00", 1.1151177217877337]], 1, raw_div);
         
         </script>
         </body></html>

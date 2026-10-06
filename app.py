@@ -71,6 +71,11 @@ def verify_token(authorization: str = Header(None)) -> dict:
         raise HTTPException(status_code=401, detail="Invalid token")
     return payload
 
+def verify_admin_token(payload: dict = Depends(verify_token)) -> dict:
+    if payload.get("role") != "Administrator":
+        raise HTTPException(status_code=403, detail="Access forbidden: Administrator role required")
+    return payload
+
 @app.post("/login")
 def login(req: LoginRequest):
     user = USERS.get(req.username)
@@ -82,6 +87,15 @@ def login(req: LoginRequest):
         "role": user["role"],
         "username": req.username,
         "name": user["name"]
+    }
+
+@app.get("/me")
+def get_me(payload: dict = Depends(verify_token)):
+    user = USERS.get(payload.get("sub"))
+    return {
+        "username": payload.get("sub"),
+        "role": payload.get("role"),
+        "name": user["name"] if user else payload.get("sub")
     }
 
 # ---------------------------------------------------------------
@@ -106,35 +120,42 @@ def get_feats(df: pd.DataFrame):
             "dow_sin", "dow_cos", "month_sin", "month_cos",
             "doy_sin", "doy_cos", "is_weekend"]
 
-def get_best_model_name(state: str, horizon: str) -> str:
-    """Lookup the genuinely best model algorithm for this state and horizon from best_models_india.csv"""
+def get_best_model_info(state: str, horizon: str):
+    """Lookup the genuinely best model algorithm & metrics for this state and horizon from best_models_india.csv"""
     best_csv = "outputs/best_models_india.csv"
     if os.path.exists(best_csv):
         bdf = pd.read_csv(best_csv)
         hlabel = HORIZON_LABEL_MAP.get(horizon, "short-term (1 day)")
         match = bdf[(bdf["node"] == state) & (bdf["horizon"] == hlabel)]
         if not match.empty:
-            return match["model"].iloc[0]
-    return "XGBoost"
+            row = match.iloc[0]
+            return {
+                "model": row["model"],
+                "mae": float(row["MAE"]),
+                "rmse": float(row["RMSE"]),
+                "mape": float(row["MAPE_%"]),
+                "r2": float(row["R2"]) if "R2" in row and not pd.isna(row["R2"]) else None,
+            }
+    return {"model": "XGBoost", "mae": None, "rmse": None, "mape": None, "r2": None}
 
 def load_model(state: str, target_col: str, model_name: str = "best"):
-    if model_name == "best" or not model_name:
-        horizon_key = "1d" if "1d" in target_col else "7d"
-        model_name = get_best_model_name(state, horizon_key)
-    
+    horizon_key = "1d" if "1d" in target_col else "7d"
+    best_info = get_best_model_info(state, horizon_key)
+    target_model_name = best_info["model"] if (model_name == "best" or not model_name) else model_name
+
     # Try exact pickle first
-    path = f"models/{state}_{target_col}_{model_name}.pkl"
+    path = f"models/{state}_{target_col}_{target_model_name}.pkl"
     if os.path.exists(path):
-        return joblib.load(path), model_name
+        return joblib.load(path), target_model_name
 
     # Fallback options if pickle name varies
     fallback_xgb = f"models/{state}_{target_col}_XGBoost.pkl"
     if os.path.exists(fallback_xgb):
-        return joblib.load(fallback_xgb), "XGBoost"
+        return joblib.load(fallback_xgb), target_model_name
     
     fallback_rf = f"models/{state}_{target_col}_RandomForest.pkl"
     if os.path.exists(fallback_rf):
-        return joblib.load(fallback_rf), "RandomForest"
+        return joblib.load(fallback_rf), target_model_name
 
     raise HTTPException(status_code=404, detail=f"No trained model found for {state} - {target_col}")
 
@@ -157,19 +178,7 @@ def forecast(state: str, horizon: str = "1d", model_name: str = "best", payload:
     latest = df.iloc[[-1]]
     pred = float(model.predict(latest[feats])[0])
 
-    # Get accuracy metrics for this best model
-    mae, rmse, mape, r2 = None, None, None, None
-    comp_csv = "outputs/model_comparison_india.csv"
-    if os.path.exists(comp_csv):
-        cdf = pd.read_csv(comp_csv)
-        hlabel = HORIZON_LABEL_MAP.get(horizon, "short-term (1 day)")
-        m = cdf[(cdf["node"] == state) & (cdf["horizon"] == hlabel) & (cdf["model"] == actual_model_name)]
-        if not m.empty:
-            mae = float(m["MAE"].iloc[0])
-            rmse = float(m["RMSE"].iloc[0])
-            mape = float(m["MAPE_%"].iloc[0])
-            if "R2" in m.columns:
-                r2 = float(m["R2"].iloc[0])
+    best_info = get_best_model_info(state, horizon)
 
     return {
         "state": state,
@@ -178,10 +187,10 @@ def forecast(state: str, horizon: str = "1d", model_name: str = "best", payload:
         "predicted_mu": round(pred, 2),
         "last_actual_mu": float(latest["consumption_mu"].iloc[0]),
         "model_used": actual_model_name,
-        "mae": mae,
-        "rmse": rmse,
-        "mape_pct": mape,
-        "r2": r2,
+        "mae": best_info["mae"],
+        "rmse": best_info["rmse"],
+        "mape_pct": best_info["mape"],
+        "r2": best_info["r2"],
     }
 
 @app.get("/history/{state}")
@@ -211,7 +220,6 @@ def explain(state: str, horizon: str = "1d", payload: dict = Depends(verify_toke
         shap_values = explainer(X)
         impacts = shap_values.values[0] if hasattr(shap_values, "values") else shap_values[0]
     except Exception:
-        # Fallback to feature importances if SHAP TreeExplainer fails
         impacts = getattr(model, "feature_importances_", np.zeros(len(feats)))
 
     contributions = pd.DataFrame({
@@ -234,8 +242,8 @@ def explain_lime(state: str, horizon: str = "1d", payload: dict = Depends(verify
     feats = get_feats(df)
     model, model_used = load_model(state, target_col, "best")
 
-    X_train = df[feats].iloc[:-30]
-    X_test = df[feats].iloc[[-1]]
+    X_train = df[feats].iloc[:-30].fillna(0)
+    X_test = df[feats].iloc[[-1]].fillna(0)
 
     explainer = LimeTabularExplainer(
         training_data=X_train.values,
@@ -297,7 +305,7 @@ def recommend_endpoint(state: str, horizon: str = "1d", payload: dict = Depends(
     }
 
 @app.get("/monitoring")
-def monitoring(payload: dict = Depends(verify_token)):
+def monitoring(payload: dict = Depends(verify_admin_token)):
     path = "outputs/monitoring_log_india.csv"
     if not os.path.exists(path):
         return {"log": [], "note": "No monitoring log recorded yet."}
@@ -305,7 +313,7 @@ def monitoring(payload: dict = Depends(verify_token)):
     return {"log": df.tail(30).to_dict(orient="records")}
 
 @app.get("/feedback")
-def feedback(payload: dict = Depends(verify_token)):
+def feedback(payload: dict = Depends(verify_admin_token)):
     path = "outputs/feedback_log_india.csv"
     if not os.path.exists(path):
         return {"log": [], "note": "No feedback log recorded yet."}
@@ -313,7 +321,7 @@ def feedback(payload: dict = Depends(verify_token)):
     return {"log": df.tail(30).to_dict(orient="records")}
 
 @app.get("/model_comparison")
-def model_comparison(payload: dict = Depends(verify_token)):
+def model_comparison(payload: dict = Depends(verify_admin_token)):
     path = "outputs/model_comparison_india.csv"
     if not os.path.exists(path):
         return {"data": []}
@@ -321,7 +329,7 @@ def model_comparison(payload: dict = Depends(verify_token)):
     return {"data": df.to_dict(orient="records")}
 
 @app.get("/best_models")
-def best_models(payload: dict = Depends(verify_token)):
+def best_models(payload: dict = Depends(verify_admin_token)):
     path = "outputs/best_models_india.csv"
     if not os.path.exists(path):
         return {"data": []}
@@ -331,3 +339,4 @@ def best_models(payload: dict = Depends(verify_token)):
 # Serve dashboard static files at root
 if os.path.isdir("dashboard"):
     app.mount("/", StaticFiles(directory="dashboard", html=True), name="dashboard")
+
