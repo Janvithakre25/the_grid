@@ -37089,25 +37089,25 @@
 /***/ })
 /******/ ]);
 //# sourceMappingURL=bundle.js.map </script></head><body>
-        <div class="lime top_div" id="top_div8MK6IA3EHRRU9Z6"></div>
+        <div class="lime top_div" id="top_divW4C4XU9QNLTWRLH"></div>
         
         <script>
-        var top_div = d3.select('#top_div8MK6IA3EHRRU9Z6').classed('lime top_div', true);
+        var top_div = d3.select('#top_divW4C4XU9QNLTWRLH').classed('lime top_div', true);
         
         
                     var pp_div = top_div.append('div')
                                         .classed('lime predicted_value', true);
                     var pp_svg = pp_div.append('svg').style('width', '100%');
-                    var pp = new lime.PredictedValue(pp_svg, 430.1220703125, 364.7735290527344, 503.63470458984375);
+                    var pp = new lime.PredictedValue(pp_svg, 432.6495056152344, 371.83306884765625, 508.5916748046875);
                     
         var exp_div;
             var exp = new lime.Explanation(["negative", "positive"]);
         
             exp_div = top_div.append('div').classed('lime explanation', true);
-            exp.show([["433.70 < lag_7d <= 464.00", -7.124876453744726], ["403.70 < lag_1d <= 432.00", -6.829995427606131], ["roll_mean_30d <= 425.32", 4.258307458406857], ["414.46 < roll_mean_7d <= 436.17", 3.7668971266465174], ["roll_std_7d <= 15.12", -2.729522794580136], ["403.40 < lag_30d <= 431.00", -2.476924196186955]], 1, exp_div);
+            exp.show([["403.70 < lag_1d <= 432.00", -7.545735147417961], ["433.70 < lag_7d <= 464.00", -6.564968880956683], ["roll_mean_30d <= 425.32", 5.579604045777709], ["414.46 < roll_mean_7d <= 436.17", 3.818111350115386], ["403.40 < lag_30d <= 431.00", -3.1782077102070447], ["roll_std_7d <= 15.12", -3.0358815344935874]], 1, exp_div);
             
         var raw_div = top_div.append('div');
-            exp.show_raw_tabular([["lag_7d", "443.00", -7.124876453744726], ["lag_1d", "408.30", -6.829995427606131], ["roll_mean_30d", "401.49", 4.258307458406857], ["roll_mean_7d", "432.23", 3.7668971266465174], ["roll_std_7d", "13.20", -2.729522794580136], ["lag_30d", "425.10", -2.476924196186955]], 1, raw_div);
+            exp.show_raw_tabular([["lag_1d", "408.30", -7.545735147417961], ["lag_7d", "443.00", -6.564968880956683], ["roll_mean_30d", "401.49", 5.579604045777709], ["roll_mean_7d", "432.23", 3.818111350115386], ["lag_30d", "425.10", -3.1782077102070447], ["roll_std_7d", "13.20", -3.0358815344935874]], 1, raw_div);
         
         </script>
         </body></html>

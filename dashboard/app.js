@@ -7,9 +7,9 @@
  * 3. Utility Company
  */
 
-const API_BASE_URL = window.location.port === "5500"
-  ? "http://localhost:8000"
-  : (window.location.origin && window.location.origin.startsWith("http") ? window.location.origin : "http://localhost:8000");
+const API_BASE_URL = (window.location.origin && window.location.origin.startsWith("http") && !window.location.origin.includes("file://"))
+  ? window.location.origin
+  : "http://127.0.0.1:8000";
 
 const Z_SCORES = {
   "0.80": 1.28,
@@ -147,7 +147,10 @@ async function handleLogin(e) {
 
     showDashboardView();
   } catch (err) {
-    showLoginError(err.message);
+    const errorMsg = (err.message && err.message.includes("Failed to fetch"))
+      ? "Cannot connect to backend server. Make sure Python server is running via 'python -m uvicorn app:app --reload --port 8000'."
+      : err.message;
+    showLoginError(errorMsg);
   }
 }
 

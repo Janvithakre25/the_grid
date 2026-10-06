@@ -30,7 +30,7 @@
       </div>
       <p class="login-subtitle">Energy Consumption Forecasting & Smart Grid Decision Support</p>
 
-      <form id="login-form" novalidate>
+      <form id="login-form" onsubmit="event.preventDefault(); handleLogin(event);" novalidate>
         <div class="form-group">
           <label class="form-label" for="username-input">Username</label>
           <input
@@ -191,7 +191,7 @@
           <div class="kpi-card">
             <div class="kpi-header"><span class="kpi-title">Verified Model MAE</span><span class="kpi-icon">🎯</span></div>
             <div class="kpi-body"><span class="kpi-value" id="kpi-val-mae">—</span><span class="kpi-unit">MU</span></div>
-            <div class="kpi-footer" id="kpi-sub-mae">Test error metric</div>
+            <div class="kpi-footer" id="kpi-sub-mae">Test evaluation metric</div>
           </div>
         </section>
 
@@ -353,6 +353,6 @@
   </div>
 
   <!-- Application JS -->
-  <script src="app.js"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>
