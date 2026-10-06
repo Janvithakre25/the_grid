@@ -66,7 +66,7 @@ python 08_feedback_loop_india.py
 Start the FastAPI application server:
 
 ```bash
-uvicorn app:app --reload --port 8000
+python -m uvicorn app:app --reload --port 8000
 ```
 
 Open `http://127.0.0.1:8000` in your web browser.
