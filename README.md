@@ -72,9 +72,12 @@ python -m uvicorn app:app --reload --port 8000
 Open `http://127.0.0.1:8000` in your web browser.
 
 ### Role Credentials for Testing:
-- **Administrator:** `admin / admin123`
-- **Grid Operator:** `operator / operator123`
-- **Utility Company:** `utility / utility123`
+- **Administrator:** `admin / admin123` (System Control & Governance)
+- **Grid Operator:** `operator / operator123` (Live Operations & Decision Support)
+- **Utility Company:** `utility / utility123` (Planning, Demand & Business Insights)
+
+> **Note on Role Portal Separation:**
+> The distinct role portals (`#/admin`, `#/operator`, `#/utility`) and specialized dashboards (`#/admin/app`, `#/operator/app`, `#/utility/app`) represent a purpose-built frontend user experience with strict persona verification. At the backend level, all roles authenticate through the unified `POST /login` endpoint, and the server strictly enforces the Administrator role via HTTP 403 Forbidden on governance endpoints (`/monitoring`, `/feedback`, `/model_comparison`, `/best_models`).
 
 ---
 
